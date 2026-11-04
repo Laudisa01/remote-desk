@@ -19,7 +19,7 @@ Die App läuft im Hintergrund weiter (Symbol in Menüleiste/Taskleiste), wenn du
 
 **Windows:** „Der Computer wurde durch Windows geschützt“ → *Weitere Informationen → Trotzdem ausführen* (die App ist nicht signiert).
 
-**Mac:** Rechtsklick auf RemoteDesk → *Öffnen*. Danach in der App auf **Bildschirmaufnahme** und **Bedienungshilfen** klicken und RemoteDesk in den Systemeinstellungen erlauben. Anschließend RemoteDesk über das Menüleisten-Symbol beenden und neu öffnen.
+**Mac:** RemoteDesk aus dem DMG in *Programme* ziehen und öffnen. Da die App nicht bei Apple notarisiert ist, kommt beim ersten Öffnen „Apple konnte nicht überprüfen …“ → *Fertig* klicken, dann *Systemeinstellungen → Datenschutz & Sicherheit* → ganz unten bei RemoteDesk **Dennoch öffnen** (ältere macOS-Versionen: Rechtsklick auf die App → *Öffnen*). Das ist nur einmal nötig. Danach in der App auf **Bildschirmaufnahme** und **Bedienungshilfen** klicken und RemoteDesk in den Systemeinstellungen erlauben. Anschließend RemoteDesk über das Menüleisten-Symbol beenden und neu öffnen.
 
 ## Bedienung im Browser
 

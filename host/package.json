@@ -1,7 +1,7 @@
 {
   "name": "remote-desk-host",
   "productName": "RemoteDesk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "RemoteDesk – diesen Computer für Fernzugriff freigeben",
   "main": "main.js",
@@ -49,7 +49,10 @@
       "extendInfo": {
         "NSScreenCaptureUsageDescription": "RemoteDesk überträgt deinen Bildschirm an den Computer, dem du Zugriff erlaubst."
       },
-      "artifactName": "RemoteDesk-${arch}.${ext}"
+      "artifactName": "RemoteDesk-${arch}.${ext}",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
     },
     "win": {
       "target": [
@@ -66,6 +69,7 @@
       "oneClick": true,
       "perMachine": false,
       "artifactName": "RemoteDesk-Setup.${ext}"
-    }
+    },
+    "afterPack": "build/afterPack.js"
   }
 }
