@@ -1,0 +1,71 @@
+{
+  "name": "remote-desk-host",
+  "productName": "RemoteDesk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RemoteDesk – diesen Computer für Fernzugriff freigeben",
+  "main": "main.js",
+  "author": "RemoteDesk",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "peerjs": "^1.5.5"
+  },
+  "build": {
+    "appId": "app.remotedesk.host",
+    "productName": "RemoteDesk",
+    "files": [
+      "main.js",
+      "preload.js",
+      "keymap.js",
+      "renderer.html",
+      "renderer.js",
+      "renderer.css",
+      "vendor/**"
+    ],
+    "asarUnpack": [
+      "node_modules/@nut-tree-fork/**"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "extendInfo": {
+        "NSScreenCaptureUsageDescription": "RemoteDesk überträgt deinen Bildschirm an den Computer, dem du Zugriff erlaubst."
+      },
+      "artifactName": "RemoteDesk-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "RemoteDesk-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "RemoteDesk-Setup.${ext}"
+    }
+  }
+}

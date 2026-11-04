@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; connect-src *; style-src 'self'; script-src 'self'" />
+  <title>RemoteDesk</title>
+  <link rel="stylesheet" href="renderer.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">▣ RemoteDesk</div>
+    <div id="online" class="badge off">● Offline</div>
+  </header>
+
+  <section id="perms" class="box warn hidden">
+    <strong>macOS-Freigaben nötig</strong>
+    <p class="small">Damit man diesen Mac sehen und steuern kann, braucht RemoteDesk zwei Freigaben. Danach RemoteDesk über das Menüleisten-Symbol beenden und neu öffnen.</p>
+    <div class="row">
+      <button id="permScreen" class="secondary">Bildschirmaufnahme</button>
+      <button id="permAccess" class="secondary">Bedienungshilfen</button>
+    </div>
+  </section>
+
+  <!-- PIN einrichten -->
+  <section id="setup" class="box hidden">
+    <strong id="setupTitle">PIN festlegen</strong>
+    <p class="small muted">Mit dieser PIN (6–12 Ziffern) kann man sich von überall mit diesem Computer verbinden. Gib sie niemandem, dem du nicht vertraust.</p>
+    <input id="oldPin" type="password" inputmode="numeric" placeholder="Bisherige PIN" class="hidden" maxlength="12" />
+    <input id="pin1" type="password" inputmode="numeric" placeholder="Neue PIN" maxlength="12" />
+    <input id="pin2" type="password" inputmode="numeric" placeholder="PIN wiederholen" maxlength="12" />
+    <div class="row">
+      <button id="savePin" class="grow">PIN speichern</button>
+      <button id="cancelPin" class="secondary hidden">Abbrechen</button>
+    </div>
+  </section>
+
+  <!-- Bereit -->
+  <section id="ready" class="box hidden">
+    <div class="muted small">Code dieses Computers</div>
+    <div id="code" class="code">— — —</div>
+    <p class="small muted center">Dieser Code bleibt immer gleich. Verbinden: <a href="#" id="viewerLink"></a> öffnen, Code + PIN eingeben.</p>
+  </section>
+
+  <!-- Verbunden -->
+  <section id="active" class="box live hidden">
+    <div class="pulse"></div>
+    <strong>Dieser Computer wird ferngesteuert</strong>
+    <p id="activeInfo" class="small"></p>
+    <button id="stopBtn" class="danger big">Verbindung trennen</button>
+  </section>
+
+  <p id="status" class="status small"></p>
+
+  <section id="settings" class="box hidden">
+    <strong class="small">Einstellungen</strong>
+    <div class="small muted" style="margin-top:8px">Bildschirm, der übertragen wird</div>
+    <div id="screens" class="screens"></div>
+    <label class="check"><input type="checkbox" id="autostart" /> Beim Anmelden automatisch starten</label>
+    <label class="check"><input type="checkbox" id="requireConfirm" /> Jeden Zugriff hier zusätzlich bestätigen</label>
+    <button id="changePin" class="secondary small-btn">PIN ändern</button>
+  </section>
+
+  <p class="small muted foot">Fenster schließen = RemoteDesk bleibt im Hintergrund erreichbar (Symbol in der Menüleiste / Taskleiste).</p>
+
+  <script src="vendor/peerjs.min.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
