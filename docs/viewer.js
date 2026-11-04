@@ -118,34 +118,57 @@
     cleanup();
   }
 
-  function connect(code, pin) {
+  // Eigene zufällige Kennung erzeugen, statt sie beim PeerJS-Server abzufragen
+  // (diese Abfrage ist die häufigste Ursache für „server-error“).
+  function randomId() {
+    const bytes = new Uint8Array(12);
+    crypto.getRandomValues(bytes);
+    return 'rdv-' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  const RETRYABLE = ['server-error', 'socket-error', 'socket-closed', 'network', 'unavailable-id'];
+  const MAX_ATTEMPTS = 4;
+
+  function connect(code, pin, attempt = 1) {
     connecting = true;
     ending = false;
     connectBtn.disabled = true;
-    setStatus('Verbinde …');
+    setStatus(attempt === 1 ? 'Verbinde …' : `Verbinde … (Versuch ${attempt} von ${MAX_ATTEMPTS})`);
     cleanup();
 
-    peer = new Peer({ debug: 1 });
+    const myPeer = new Peer(randomId(), { debug: 1 });
+    peer = myPeer;
+    let pinSent = false;
     const giveUp = setTimeout(() => {
-      if (connecting) failConnect('Keine Antwort. Ist der Computer eingeschaltet und RemoteDesk gestartet?');
+      if (connecting && peer === myPeer) failConnect('Keine Antwort. Ist der Computer eingeschaltet und RemoteDesk gestartet?');
     }, 25000);
 
-    peer.on('error', (err) => {
+    myPeer.on('error', (err) => {
+      if (peer !== myPeer) return; // veralteter Versuch
       if (err.type === 'peer-unavailable') {
         clearTimeout(giveUp);
         failConnect('Computer nicht erreichbar. Code prüfen – und ob RemoteDesk dort läuft und online ist.');
+      } else if (connecting && !pinSent && RETRYABLE.includes(err.type) && attempt < MAX_ATTEMPTS) {
+        // Vermittlungsserver kurz nicht erreichbar → automatisch erneut versuchen
+        clearTimeout(giveUp);
+        cleanup();
+        setTimeout(() => { if (connecting) connect(code, pin, attempt + 1); }, 1500 * attempt);
       } else if (connecting) {
         clearTimeout(giveUp);
-        failConnect('Verbindungsfehler: ' + (err.message || err.type));
+        failConnect(RETRYABLE.includes(err.type)
+          ? 'Der Vermittlungsserver ist gerade nicht erreichbar. Bitte in einer Minute erneut versuchen – oder Werbeblocker/VPN/Firmen-Firewall prüfen.'
+          : 'Verbindungsfehler: ' + (err.message || err.type));
       }
     });
 
-    peer.on('open', () => {
-      const myConn = peer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
+    myPeer.on('open', () => {
+      if (peer !== myPeer) return;
+      const myConn = myPeer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
       conn = myConn;
       conn.on('open', () => {
         setStatus('PIN wird geprüft …');
-        conn.send({ t: 'auth', pin });
+        pinSent = true;
+        myConn.send({ t: 'auth', pin });
       });
       conn.on('data', (msg) => {
         if (!msg || typeof msg !== 'object') return;
