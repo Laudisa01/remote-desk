@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RemoteDesk Verbindungstest</title>
+  <link rel="stylesheet" href="style.css?v=4" />
+  <style>
+    .tests { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 8px; }
+    .tests li { display: flex; gap: 10px; align-items: baseline; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #0c0e12; }
+    .tests .icon { width: 1.2em; flex: none; }
+    .tests .ok { color: #30a46c; }
+    .tests .bad { color: var(--danger); }
+    .tests small { display: block; color: var(--muted); }
+    #summary { margin-top: 16px; font-weight: 600; }
+    #copy { margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <div class="card">
+      <div class="logo">▣ RemoteDesk</div>
+      <h1>Verbindungstest</h1>
+      <p class="muted">Prüft, ob dieser Computer die Dienste erreicht, die RemoteDesk braucht. Dauert ca. 10 Sekunden.</p>
+      <ul id="tests" class="tests"></ul>
+      <p id="summary"></p>
+      <button id="copy" class="hidden" type="button">Ergebnis kopieren</button>
+      <p class="muted"><a href="./">← Zurück zu RemoteDesk</a></p>
+    </div>
+  </main>
+  <script>
+  (async () => {
+    const list = document.getElementById('tests');
+    const results = [];
+    function row(name) {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="icon">⏳</span><span><span class="n"></span><small></small></span>';
+      li.querySelector('.n').textContent = name;
+      list.appendChild(li);
+      return (ok, detail) => {
+        const icon = li.querySelector('.icon');
+        icon.textContent = ok ? '✔' : '✖';
+        icon.className = 'icon ' + (ok ? 'ok' : 'bad');
+        li.querySelector('small').textContent = detail || '';
+        results.push(`${ok ? 'OK ' : 'FEHLER'} ${name}${detail ? ' – ' + detail : ''}`);
+      };
+    }
+    const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('Zeitüberschreitung')), ms));
+
+    function wsTest(url) {
+      return new Promise((resolve) => {
+        let done = false;
+        const finish = (ok, d) => { if (!done) { done = true; try { ws.close(); } catch {} resolve([ok, d]); } };
+        let ws;
+        try { ws = new WebSocket(url); } catch (e) { return resolve([false, e.message]); }
+        ws.onopen = () => finish(true, 'verbunden');
+        ws.onmessage = () => finish(true, 'verbunden');
+        ws.onerror = () => finish(false, 'blockiert oder nicht erreichbar');
+        ws.onclose = (e) => finish(false, 'geschlossen (Code ' + e.code + ')');
+        setTimeout(() => finish(false, 'Zeitüberschreitung'), 8000);
+      });
+    }
+
+    // 1) Browser kann WebRTC?
+    const r1 = row('Browser unterstützt WebRTC');
+    r1(!!window.RTCPeerConnection, navigator.userAgent.replace(/^Mozilla\/5\.0 /, ''));
+
+    // 2) PeerJS-Bibliothek von jsDelivr
+    const r2 = row('Bibliothek laden (cdn.jsdelivr.net)');
+    try {
+      const r = await Promise.race([fetch('https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js', { cache: 'no-store' }), timeout(8000)]);
+      r2(r.ok, 'HTTP ' + r.status);
+    } catch (e) { r2(false, e.message); }
+
+    // 3) PeerJS-Server per HTTPS
+    const r3 = row('Vermittlungsserver per HTTPS (0.peerjs.com)');
+    try {
+      const r = await Promise.race([fetch('https://0.peerjs.com/peerjs/id?ts=' + Date.now(), { cache: 'no-store' }), timeout(8000)]);
+      r3(r.ok, 'HTTP ' + r.status);
+    } catch (e) { r3(false, e.message); }
+
+    // 4) PeerJS-Server per WebSocket (das braucht RemoteDesk wirklich)
+    const r4 = row('Vermittlungsserver per WebSocket (0.peerjs.com)');
+    const id = 'rdcheck' + Math.random().toString(16).slice(2);
+    const [ok4, d4] = await wsTest(`wss://0.peerjs.com/peerjs?key=peerjs&id=${id}&token=${id}&version=1.5.5`);
+    r4(ok4, d4);
+
+    // 5) Vergleich: anderer WebSocket-Dienst
+    const r5 = row('Anderer WebSocket-Dienst (Vergleich)');
+    const [ok5, d5] = await wsTest('wss://relay.damus.io');
+    r5(ok5, d5);
+
+    // 6) STUN (Weg für direkte Verbindung finden)
+    const r6 = row('Direktverbindung vorbereiten (STUN)');
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+      pc.createDataChannel('x');
+      let srflx = false;
+      pc.onicecandidate = (e) => { if (e.candidate && / typ srflx /.test(e.candidate.candidate)) srflx = true; };
+      await pc.setLocalDescription(await pc.createOffer());
+      await new Promise((r) => setTimeout(r, 4000));
+      pc.close();
+      r6(srflx, srflx ? 'öffentliche Adresse gefunden' : 'kein STUN-Ergebnis (UDP evtl. blockiert)');
+    } catch (e) { r6(false, e.message); }
+
+    const sum = document.getElementById('summary');
+    if (!ok4 && ok5) sum.textContent = '→ Nur der Vermittlungsserver 0.peerjs.com wird blockiert (Werbeblocker, Virenscanner oder Netzwerkfilter).';
+    else if (!ok4 && !ok5) sum.textContent = '→ WebSocket-Verbindungen werden generell blockiert (Firmen-/Schulnetz, Proxy oder Virenscanner mit HTTPS-Prüfung).';
+    else if (ok4) sum.textContent = '→ Vermittlungsserver erreichbar. RemoteDesk sollte sich verbinden können.';
+
+    const btn = document.getElementById('copy');
+    btn.classList.remove('hidden');
+    btn.onclick = async () => {
+      const text = results.join('\n') + '\n' + sum.textContent;
+      try { await navigator.clipboard.writeText(text); btn.textContent = 'Kopiert ✔'; }
+      catch { prompt('Ergebnis kopieren:', text); }
+    };
+  })();
+  </script>
+</body>
+</html>

@@ -155,9 +155,15 @@
         setTimeout(() => { if (connecting) connect(code, pin, attempt + 1); }, 1500 * attempt);
       } else if (connecting) {
         clearTimeout(giveUp);
-        failConnect(RETRYABLE.includes(err.type)
-          ? 'Der Vermittlungsserver ist gerade nicht erreichbar. Bitte in einer Minute erneut versuchen – oder Werbeblocker/VPN/Firmen-Firewall prüfen.'
-          : 'Verbindungsfehler: ' + (err.message || err.type));
+        if (RETRYABLE.includes(err.type)) {
+          failConnect('Der Vermittlungsserver ist von diesem Computer aus nicht erreichbar (Werbeblocker, Virenscanner oder Netzwerkfilter?). ');
+          const a = document.createElement('a');
+          a.href = 'check.html';
+          a.textContent = 'Verbindungstest starten';
+          statusEl.appendChild(a);
+        } else {
+          failConnect('Verbindungsfehler: ' + (err.message || err.type));
+        }
       }
     });
 
