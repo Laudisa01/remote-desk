@@ -1,7 +1,7 @@
 {
   "name": "remote-desk-host",
   "productName": "RemoteDesk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "RemoteDesk – diesen Computer für Fernzugriff freigeben",
   "main": "main.js",

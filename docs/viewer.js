@@ -62,7 +62,7 @@
       item.title = 'Code übernehmen';
       const name = document.createElement('span');
       name.className = 'name';
-      name.textContent = '🖥 ' + c.name;
+      name.textContent = c.name;
       const code = document.createElement('span');
       code.className = 'code';
       code.textContent = formatCode(c.code);
@@ -71,6 +71,7 @@
       del.type = 'button';
       del.title = 'Entfernen';
       del.textContent = '✕';
+      del.setAttribute('aria-label', 'Entfernen');
       del.onclick = (e) => {
         e.stopPropagation();
         storeSaved(loadSaved().filter((x) => x.code !== c.code));
@@ -187,7 +188,7 @@
         if (msg.t === 'auth-ok') {
           clearTimeout(giveUp);
           pinInput.value = '';
-          $('hostName').textContent = '🖥 ' + (msg.name || '');
+          $('hostName').textContent = msg.name || '';
           if ($('remember').checked) rememberComputer(code, msg.name);
           renderSaved();
           setStatus('Bild wird geladen …');
@@ -278,7 +279,7 @@
     list.forEach((s) => {
       const o = document.createElement('option');
       o.value = String(s.id);
-      o.textContent = '🖵 ' + String(s.label || s.id);
+      o.textContent = String(s.label || s.id);
       screenSel.appendChild(o);
     });
     screenSel.value = String(cur || '');
@@ -326,7 +327,7 @@
     video.focus();
   }
   document.addEventListener('fullscreenchange', () => {
-    $('fsBtn').textContent = document.fullscreenElement ? '⛶ Vollbild beenden' : '⛶ Vollbild';
+    $('fsBtn').querySelector('.lbl').textContent = document.fullscreenElement ? 'Vollbild beenden' : 'Vollbild';
     if (!document.fullscreenElement && navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock();
   });
 

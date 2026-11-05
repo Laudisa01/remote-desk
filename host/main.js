@@ -1,7 +1,7 @@
 // RemoteDesk – Host-App (läuft auf dem Computer, der gesteuert wird)
 const {
   app, BrowserWindow, ipcMain, desktopCapturer, screen, dialog, clipboard, shell,
-  systemPreferences, Tray, Menu, nativeImage,
+  systemPreferences, Tray, Menu, nativeImage, nativeTheme,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -113,7 +113,8 @@ function createWindow(hidden) {
     height: 700,
     show: !hidden,
     title: 'RemoteDesk',
-    backgroundColor: '#0f1115',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1e1e1e' : '#f5f5f7',
+    ...(isMac ? { titleBarStyle: 'hiddenInset' } : {}),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

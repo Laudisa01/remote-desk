@@ -10,6 +10,7 @@
   let peer = null;
   let session = null; // { conn, call, stream }
   let retryTimer = null;
+  let thumbRetried = false;
 
   function setStatus(t, err = false) {
     statusEl.textContent = t || '';
@@ -29,6 +30,8 @@
   }
 
   // ---------- Start ----------
+  if (host.platform === 'darwin') document.body.classList.add('mac');
+
   async function init() {
     cfg = await host.getConfig();
     $('code').textContent = cfg.deviceId.replace(/(\d{3})(?=\d)/g, '$1 ');
@@ -59,8 +62,9 @@
     sources.forEach((s, i) => {
       const el = document.createElement('div');
       el.className = 'screen-opt';
-      const img = document.createElement('img');
-      img.src = s.thumb;
+      const hasThumb = s.thumb && s.thumb.length > 40;
+      const img = document.createElement(hasThumb ? 'img' : 'div');
+      if (hasThumb) img.src = s.thumb; else img.className = 'ph';
       const label = document.createElement('span');
       label.textContent = `${sources.length > 1 ? `Bildschirm ${i + 1}${s.primary ? ' (Haupt)' : ''}` : 'Gesamter Bildschirm'} · ${s.size}`;
       el.append(img, label);
@@ -68,6 +72,11 @@
       box.appendChild(el);
       if (s === pick) select(s, el, false);
     });
+    // macOS liefert beim ersten Abruf oft leere Vorschaubilder – kurz danach noch einmal holen
+    if (sources.some((s) => !s.thumb || s.thumb.length <= 40) && !thumbRetried) {
+      thumbRetried = true;
+      setTimeout(() => { if (!session) loadSources(); }, 1500);
+    }
     if (!sources.length) {
       box.innerHTML = '<span class="small muted">Kein Bildschirm verfügbar – unter macOS die Freigabe „Bildschirmaufnahme“ erteilen.</span>';
     }
