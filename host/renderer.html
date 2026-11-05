@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; connect-src *; style-src 'self'; script-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self' blob: mediastream:; connect-src *; style-src 'self'; script-src 'self'" />
   <title>RemoteDesk</title>
   <link rel="stylesheet" href="renderer.css" />
 </head>
@@ -16,6 +16,11 @@
   </header>
 
   <main>
+    <section id="update" class="banner hidden">
+      <div><strong id="updateTitle">Neue Version verfügbar</strong><div id="updateText" class="small muted"></div></div>
+      <button id="updateBtn" class="primary">Aktualisieren</button>
+    </section>
+
     <section id="perms" class="group warn hidden">
       <div class="group-body">
         <div class="title-row"><span class="dot warn"></span><strong>Freigaben erforderlich</strong></div>
@@ -50,11 +55,32 @@
     </section>
 
     <!-- Verbunden -->
-    <section id="active" class="hero live hidden">
-      <div class="pulse"></div>
-      <h2>Dieser Computer wird ferngesteuert</h2>
-      <p id="activeInfo" class="small muted"></p>
-      <button id="stopBtn" class="danger big">Verbindung trennen</button>
+    <section id="active" class="hidden">
+      <div class="hero live">
+        <div class="pulse"></div>
+        <h2>Dieser Computer wird ferngesteuert</h2>
+        <p id="viewerInfo" class="small muted"></p>
+        <p id="recNotice" class="rec hidden">● Die Sitzung wird gerade aufgezeichnet</p>
+        <button id="stopBtn" class="danger big">Verbindung trennen</button>
+      </div>
+
+      <div class="group list">
+        <label class="list-row">
+          <span>Bildschirm hier schwarz schalten<small class="muted">Personen im Raum sehen nichts, die Übertragung läuft weiter</small></span>
+          <input type="checkbox" id="privacy" /><span class="switch" aria-hidden="true"></span>
+        </label>
+      </div>
+
+      <div id="transfers" class="group hidden"><div id="transferList" class="group-body transfers"></div></div>
+
+      <div class="section-title">Chat</div>
+      <div class="group chat">
+        <div id="chatLog" class="chat-log"><p class="small muted center chat-empty">Nachrichten an die verbundene Person erscheinen hier.</p></div>
+        <form id="chatForm" class="chat-form">
+          <input id="chatInput" placeholder="Nachricht schreiben …" maxlength="1000" autocomplete="off" />
+          <button class="primary" type="submit">Senden</button>
+        </form>
+      </div>
     </section>
 
     <p id="status" class="status small"></p>
@@ -65,23 +91,44 @@
         <div class="group-body"><div id="screens" class="screens"></div></div>
       </div>
 
+      <div class="section-title">Hilfe-Zugang</div>
+      <div class="group">
+        <div id="onceIdle" class="group-body once-row">
+          <span class="small">Jemandem einmalig helfen lassen, ohne deine feste PIN zu verraten.</span>
+          <button id="onceBtn" class="secondary">Einmal-PIN</button>
+        </div>
+        <div id="onceBox" class="group-body center hidden">
+          <div class="label small muted">Einmal-PIN · gültig noch <span id="onceLeft">10:00</span></div>
+          <div id="oncePin" class="code once">— — —</div>
+          <p class="small muted">Gib der Person den Computer-Code und diese PIN. Sie gilt für eine Verbindung, du musst den Zugriff hier bestätigen.</p>
+          <button id="onceCancel" class="secondary">Zurückziehen</button>
+        </div>
+      </div>
+
       <div class="section-title">Allgemein</div>
       <div class="group list">
-        <label class="list-row">
-          <span>Beim Anmelden automatisch starten</span>
-          <input type="checkbox" id="autostart" /><span class="switch" aria-hidden="true"></span>
-        </label>
-        <label class="list-row">
-          <span>Jeden Zugriff hier bestätigen</span>
-          <input type="checkbox" id="requireConfirm" /><span class="switch" aria-hidden="true"></span>
-        </label>
-        <button id="changePin" class="list-row link-row">
-          <span>PIN ändern</span><span class="chev" aria-hidden="true">›</span>
-        </button>
+        <label class="list-row"><span>Beim Anmelden automatisch starten</span>
+          <input type="checkbox" id="autostart" /><span class="switch" aria-hidden="true"></span></label>
+        <label class="list-row"><span>Jeden Zugriff hier bestätigen</span>
+          <input type="checkbox" id="requireConfirm" /><span class="switch" aria-hidden="true"></span></label>
+        <label class="list-row"><span>Ton übertragen</span>
+          <input type="checkbox" id="audio" /><span class="switch" aria-hidden="true"></span></label>
+        <label class="list-row"><span>Weitere Zuschauer erlauben<small class="muted">Bis zu 3 weitere Personen können zusehen, aber nicht steuern</small></span>
+          <input type="checkbox" id="multiView" /><span class="switch" aria-hidden="true"></span></label>
+        <label class="list-row"><span>Mitteilung bei neuem Zugriff</span>
+          <input type="checkbox" id="notify" /><span class="switch" aria-hidden="true"></span></label>
+        <label class="list-row"><span>Nach dem Trennen Computer sperren</span>
+          <input type="checkbox" id="lockOnEnd" /><span class="switch" aria-hidden="true"></span></label>
+        <button id="changePin" class="list-row link-row"><span>PIN ändern</span><span class="chev" aria-hidden="true">›</span></button>
+      </div>
+
+      <div class="section-title row-title">Verlauf <button id="historyClear" class="text-btn">Löschen</button></div>
+      <div class="group">
+        <div id="history" class="history"></div>
       </div>
     </section>
 
-    <p class="small muted foot">Beim Schließen des Fensters bleibt RemoteDesk im Hintergrund erreichbar (Symbol in der Menüleiste bzw. Taskleiste).</p>
+    <p class="small muted foot">Beim Schließen des Fensters bleibt RemoteDesk im Hintergrund erreichbar (Symbol in der Menüleiste bzw. Taskleiste).<br /><span id="version"></span></p>
   </main>
 
   <script src="vendor/peerjs.min.js"></script>

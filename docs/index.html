@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230071e3'/%3E%3Crect x='7' y='9' width='18' height='12' rx='2' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12 25h8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
   <main id="connect" class="screen">
@@ -62,15 +62,40 @@
     <div id="toolbarHandle" title="Menü" aria-label="Menü"><span></span></div>
     <div id="toolbar" class="hidden">
       <span id="hostName"></span>
+      <span id="roleBadge" class="badge hidden">Nur zusehen</span>
       <span class="sep"></span>
-      <select id="screenSel" class="hidden" aria-label="Bildschirm wählen"></select>
+      <select id="screenSel" class="hidden ctrl-only" aria-label="Bildschirm wählen"></select>
       <select id="quality" aria-label="Qualität">
         <option value="high">Hohe Qualität</option>
         <option value="medium">Mittlere Qualität</option>
         <option value="low">Niedrige Qualität</option>
       </select>
-      <select id="combo" aria-label="Tastenkombination senden">
-        <option value="">Tasten senden</option>
+      <span class="sep"></span>
+      <button id="soundBtn" class="icon-btn only hidden" title="Ton an/aus" aria-label="Ton an/aus">
+        <svg class="on" viewBox="0 0 20 20"><path d="M3 8h3l4-3v10l-4-3H3z"/><path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5a7 7 0 0 1 0 10"/></svg>
+        <svg class="off" viewBox="0 0 20 20"><path d="M3 8h3l4-3v10l-4-3H3z"/><path d="M13.5 8l4 4M17.5 8l-4 4"/></svg>
+      </button>
+      <button id="chatBtn" class="icon-btn only" title="Chat" aria-label="Chat">
+        <svg viewBox="0 0 20 20"><path d="M4 4h12a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 16 14h-6l-4 3v-3H4a1.5 1.5 0 0 1-1.5-1.5v-7A1.5 1.5 0 0 1 4 4z"/></svg>
+        <span id="chatBadge" class="dot-badge hidden"></span>
+      </button>
+      <button id="sendFileBtn" class="icon-btn only ctrl-only" title="Datei an den Computer senden (oder Datei ins Fenster ziehen)" aria-label="Datei senden">
+        <svg viewBox="0 0 20 20"><path d="M10 13V3M6 7l4-4 4 4M4 13v3h12v-3"/></svg>
+      </button>
+      <button id="getFileBtn" class="icon-btn only ctrl-only" title="Datei vom Computer holen" aria-label="Datei holen">
+        <svg viewBox="0 0 20 20"><path d="M10 3v10M6 9l4 4 4-4M4 13v3h12v-3"/></svg>
+      </button>
+      <button id="zoomBtn" class="icon-btn" title="Lupe (auf dem Handy: mit zwei Fingern zoomen)" aria-label="Lupe">
+        <svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5"/><path d="M12.5 12.5L17 17"/></svg><span id="zoomLbl">1×</span>
+      </button>
+      <button id="recBtn" class="icon-btn only" title="Sitzung aufnehmen" aria-label="Aufnahme">
+        <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/><circle class="rec-dot" cx="10" cy="10" r="3.5"/></svg>
+      </button>
+      <button id="kbdBtn" class="icon-btn only ctrl-only hidden" title="Tastatur" aria-label="Tastatur">
+        <svg viewBox="0 0 20 20"><rect x="2.5" y="5" width="15" height="10" rx="1.5"/><path d="M5.5 8h1M9.5 8h1M13.5 8h1M6 12h8"/></svg>
+      </button>
+      <select id="combo" class="ctrl-only" aria-label="Tastenkombination senden">
+        <option value="">Tasten</option>
         <option value="LeftAlt+Tab">Alt + Tab</option>
         <option value="LeftSuper">Windows / Cmd</option>
         <option value="LeftAlt+F4">Alt + F4</option>
@@ -78,10 +103,6 @@
         <option value="LeftSuper+Space">Cmd + Leertaste (Mac)</option>
         <option value="LeftControl+LeftShift+Escape">Strg + Shift + Esc</option>
       </select>
-      <button id="clipBtn" class="icon-btn" title="Text in die Zwischenablage senden">
-        <svg viewBox="0 0 20 20"><rect x="5" y="4" width="10" height="13" rx="2"/><path d="M8 4V3h4v1"/></svg>
-        <span>Text senden</span>
-      </button>
       <button id="fsBtn" class="icon-btn" title="Vollbild">
         <svg viewBox="0 0 20 20"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/></svg>
         <span class="lbl">Vollbild</span>
@@ -89,10 +110,21 @@
       <span id="stats"></span>
       <button id="leaveBtn" class="end">Trennen</button>
     </div>
+
+    <aside id="chatPanel" class="glass hidden" aria-label="Chat">
+      <div class="chat-head"><strong>Chat</strong><button id="chatClose" class="icon-btn only" aria-label="Schließen"><svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>
+      <div id="chatLog" class="chat-log"><p class="chat-empty">Schreib der Person am anderen Computer.</p></div>
+      <form id="chatForm" class="chat-form"><input id="chatInput" placeholder="Nachricht …" maxlength="1000" autocomplete="off" /><button type="submit" aria-label="Senden">↑</button></form>
+    </aside>
+
+    <div id="dropZone" class="drop hidden"><div>Datei hier ablegen<br /><small>Sie wird im Ordner „Downloads“ des anderen Computers gespeichert</small></div></div>
+    <div id="toasts" class="toasts"></div>
+    <input id="fileInput" type="file" multiple hidden />
+    <textarea id="kbdInput" class="kbd-input" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Tastatur-Eingabe"></textarea>
     <div id="overlay" class="overlay hidden"></div>
   </section>
 
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
-  <script src="viewer.js?v=7"></script>
+  <script src="viewer.js?v=8"></script>
 </body>
 </html>
