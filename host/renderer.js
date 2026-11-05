@@ -62,7 +62,7 @@
       const img = document.createElement('img');
       img.src = s.thumb;
       const label = document.createElement('span');
-      label.textContent = `${sources.length > 1 ? `Bildschirm ${i + 1}` : 'Gesamter Bildschirm'} · ${s.size}`;
+      label.textContent = `${sources.length > 1 ? `Bildschirm ${i + 1}${s.primary ? ' (Haupt)' : ''}` : 'Gesamter Bildschirm'} · ${s.size}`;
       el.append(img, label);
       el.onclick = () => select(s, el, true);
       box.appendChild(el);
@@ -173,6 +173,7 @@
       // Ab hier nur noch Befehle einer angemeldeten Verbindung
       if (!session || session.conn !== conn) return;
       if (msg.t === 'quality') setQuality(msg.v);
+      else if (msg.t === 'screen') switchScreen(String(msg.id || ''));
       else host.input(msg);
     });
     conn.on('close', () => {
@@ -182,26 +183,73 @@
     conn.on('error', () => {});
   }
 
-  async function startSession(conn) {
-    if (!selected) {
-      conn.send({ t: 'auth-fail', msg: 'Auf dem anderen Computer ist keine Bildschirmaufnahme möglich (Freigabe fehlt).' });
-      return setTimeout(() => conn.close(), 500);
-    }
-    const dims = await host.selectDisplay(selected.displayId);
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
+  function captureScreen(src) {
+    return host.selectDisplay(src.displayId).then((dims) =>
+      navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           mandatory: {
             chromeMediaSource: 'desktop',
-            chromeMediaSourceId: selected.id,
+            chromeMediaSourceId: src.id,
             maxWidth: dims.width,
             maxHeight: dims.height,
             maxFrameRate: 30,
           },
         },
-      });
+      })
+    );
+  }
+
+  function screenList() {
+    return sources.map((s, i) => ({
+      id: s.id,
+      label: `Bildschirm ${i + 1}${s.primary ? ' (Haupt)' : ''} · ${s.size}`,
+    }));
+  }
+  function sendScreens() {
+    if (!session) return;
+    try { session.conn.send({ t: 'screens', list: screenList(), cur: session.src.id }); } catch {}
+  }
+
+  // Bildschirm während der Sitzung wechseln (vom Browser aus angefordert)
+  async function switchScreen(id) {
+    if (!session || session.switching) return;
+    await loadSources(); // Monitore könnten an- oder abgesteckt worden sein
+    const src = sources.find((s) => s.id === id);
+    if (!src || src.id === session.src.id) return sendScreens();
+    const s = session;
+    s.switching = true;
+    try {
+      const stream = await captureScreen(src);
+      if (session !== s) { stream.getTracks().forEach((t) => t.stop()); return; }
+      const track = stream.getVideoTracks()[0];
+      track.contentHint = 'detail';
+      const pc = s.call && s.call.peerConnection;
+      const sender = pc && pc.getSenders().find((x) => x.track && x.track.kind === 'video');
+      if (!sender) throw new Error('keine Videoverbindung');
+      await sender.replaceTrack(track);
+      s.stream.getTracks().forEach((t) => t.stop());
+      s.stream = stream;
+      s.src = src;
+    } catch (err) {
+      console.warn('Bildschirmwechsel:', err.message);
+      if (session === s) await host.selectDisplay(s.src.displayId); // Maus wieder auf alten Bildschirm
+    } finally {
+      s.switching = false;
+      sendScreens();
+    }
+  }
+
+  async function startSession(conn) {
+    await loadSources();
+    if (!selected) {
+      conn.send({ t: 'auth-fail', msg: 'Auf dem anderen Computer ist keine Bildschirmaufnahme möglich (Freigabe fehlt).' });
+      return setTimeout(() => conn.close(), 500);
+    }
+    const src = selected;
+    let stream;
+    try {
+      stream = await captureScreen(src);
     } catch (err) {
       conn.send({ t: 'auth-fail', msg: 'Bildschirmaufnahme am anderen Computer nicht möglich: ' + err.message });
       setStatus('Bildschirmaufnahme nicht möglich: ' + err.message, true);
@@ -210,8 +258,9 @@
     const track = stream.getVideoTracks()[0];
     track.contentHint = 'detail'; // scharfe Schrift bevorzugen
 
-    session = { conn, stream, call: null };
+    session = { conn, stream, call: null, src, switching: false };
     conn.send({ t: 'auth-ok', name: cfg.computerName });
+    sendScreens();
     const call = peer.call(conn.peer, stream);
     session.call = call;
     call.on('close', () => { if (session && session.call === call) endSession('Die Verbindung wurde beendet.'); });

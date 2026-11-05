@@ -23,7 +23,7 @@ Die App läuft im Hintergrund weiter (Symbol in Menüleiste/Taskleiste), wenn du
 
 ## Bedienung im Browser
 
-- **▾** oben in der Mitte: Vollbild, Qualität, Text in die Zwischenablage senden, Tastenkombinationen, Trennen.
+- **▾** oben in der Mitte: Bildschirm wählen (bei mehreren Monitoren), Vollbild, Qualität, Text in die Zwischenablage senden, Tastenkombinationen, Trennen.
 - Im Vollbild (Chrome/Edge) gehen auch Esc, Alt+Tab und die Windows-Taste an den anderen Computer. Vollbild verlassen: **Esc lange gedrückt halten**.
 - Gemerkte Computer erscheinen oben in der Liste (nur Code + Name, nie die PIN).
 

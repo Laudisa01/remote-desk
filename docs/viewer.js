@@ -179,6 +179,7 @@
       conn.on('data', (msg) => {
         if (!msg || typeof msg !== 'object') return;
         if (msg.t === 'info') setStatus(msg.msg);
+        if (msg.t === 'screens') renderScreens(msg.list, msg.cur);
         if (msg.t === 'auth-fail') {
           clearTimeout(giveUp);
           failConnect(msg.msg);
@@ -268,6 +269,27 @@
       });
     }, 1000);
   }
+
+  // ---------- Bildschirmauswahl (bei mehreren Monitoren) ----------
+  const screenSel = $('screenSel');
+  function renderScreens(list, cur) {
+    list = Array.isArray(list) ? list : [];
+    screenSel.innerHTML = '';
+    list.forEach((s) => {
+      const o = document.createElement('option');
+      o.value = String(s.id);
+      o.textContent = '🖵 ' + String(s.label || s.id);
+      screenSel.appendChild(o);
+    });
+    screenSel.value = String(cur || '');
+    screenSel.disabled = false;
+    screenSel.classList.toggle('hidden', list.length < 2);
+  }
+  screenSel.addEventListener('change', () => {
+    screenSel.disabled = true; // bis der andere Computer gewechselt hat
+    sendInput({ t: 'screen', id: screenSel.value });
+    video.focus();
+  });
 
   // ---------- Toolbar ----------
   $('toolbarHandle').addEventListener('click', () => toolbar.classList.toggle('hidden'));

@@ -207,6 +207,7 @@ ipcMain.handle('sources:list', async () => {
       id: s.id,
       name: s.name,
       displayId: d.id,
+      primary: d.id === screen.getPrimaryDisplay().id,
       size: `${Math.round(d.size.width * d.scaleFactor)}×${Math.round(d.size.height * d.scaleFactor)}`,
       thumb: s.thumbnail.toDataURL(),
     };
